@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "POS.ConsoleApp", "POS.ConsoleApp\POS.ConsoleApp.csproj", "{D4AC2EAD-6B5D-4265-86E7-175F34C4E93A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "POS.ConsoleApp", "src\POS.ConsoleApp\POS.ConsoleApp.csproj", "{D4AC2EAD-6B5D-4265-86E7-175F34C4E93A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "POS.SyncService", "POS.SyncService\POS.SyncService.csproj", "{793B756D-A3DD-42C7-9B8E-19017F965C0E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "POS.SyncService", "src\POS.SyncService\POS.SyncService.csproj", "{793B756D-A3DD-42C7-9B8E-19017F965C0E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StoreInventory.API", "StoreInventory.API\StoreInventory.API.csproj", "{B992DBF4-36D4-461B-8A3D-3D3A3EFFE77E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StoreInventory.API", "src\StoreInventory.API\StoreInventory.API.csproj", "{B992DBF4-36D4-461B-8A3D-3D3A3EFFE77E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{F8AF7D5D-6EFB-4F50-B704-EE1F89C3E46F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "src\Common\Common.csproj", "{F8AF7D5D-6EFB-4F50-B704-EE1F89C3E46F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

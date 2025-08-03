@@ -1,6 +1,8 @@
 services:
   pos_app:
-    build: ./POS.ConsoleApp
+    build:
+      context: ./src
+      dockerfile: POS.ConsoleApp/Dockerfile
     container_name: pos_app
     volumes:
       - posdata:/app/data
@@ -8,7 +10,9 @@ services:
     tty: true
 
   pos_sync:
-    build: ./POS.SyncService
+    build:
+      context: ./src
+      dockerfile: POS.SyncService/Dockerfile
     container_name: pos_sync
     depends_on:
       - store_api
@@ -16,7 +20,9 @@ services:
       - posdata:/app/data
 
   store_api:
-    build: ./StoreInventory.API
+    build:
+      context: ./src
+      dockerfile: StoreInventory.API/Dockerfile
     container_name: store_api
     ports:
       - "5000:80"
