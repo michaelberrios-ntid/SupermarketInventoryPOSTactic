@@ -5,7 +5,7 @@ COPY . ./
 RUN dotnet publish StoreInventory.API/StoreInventory.API.csproj -c Release -o /app/publish
 
 # Runtime stage
-FROM mcr.microsoft.com/dotnet/runtime:8.0
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "StoreInventory.API.dll"]
