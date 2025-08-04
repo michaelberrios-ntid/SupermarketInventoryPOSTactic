@@ -1,6 +1,8 @@
 ﻿namespace Common;
 
-public class Class1
+public class TransactionType
 {
-
+    public const string Sale = "Sale";
+    public const string Refund = "Refund";
+    public const string InventoryAdjustment = "InventoryAdjustment";
 }
