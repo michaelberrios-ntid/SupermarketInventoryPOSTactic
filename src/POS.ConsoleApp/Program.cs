@@ -1,12 +1,9 @@
-﻿using Microsoft.Data.Sqlite;
-
-Console.WriteLine("🧾 POS Console App started.");
+﻿Console.WriteLine("POS Console App started.");
 
 while (true)
 {
     Console.Write("Select an Transaction Type:\n");
-    int n = 0;
-    foreach (var type in Enum.GetValues(typeof(TransactionType)))
+    foreach (var type in Enum.GetValues(typeof(Common.Transaction.Types)))
     {
         Console.WriteLine($"  {type}");
     }
@@ -18,10 +15,10 @@ while (true)
         continue;
     }
 
-    else if (Enum.TryParse<TransactionType>(input, true, out var transactionType))
+    else if (Enum.TryParse<Common.Transaction.Types>(input, true, out var transactionType))
     {
         Console.WriteLine($"You selected: {transactionType}");
-        if (transactionType == TransactionType.Sale)
+        if (transactionType == Common.Transaction.Types.Sale)
         {
             Console.WriteLine("Processing Sale transaction...");
             Console.Write("Scan Product Barcode for Sale: ");
@@ -37,7 +34,7 @@ while (true)
                 Console.WriteLine("Invalid barcode. Please try again.");
             }
         }
-        else if (transactionType == TransactionType.Refund)
+        else if (transactionType == Common.Transaction.Types.Refund)
         {
             Console.WriteLine("Processing Refund transaction...");
             Console.Write("Scan Product Barcode for Refund: ");
@@ -65,22 +62,3 @@ while (true)
 
     Console.WriteLine();
 }
-
-enum TransactionType
-{
-    Sale,
-    Refund
-}
-
-// var conn = new SqliteConnection("Data Source=data/POS_Local.db");
-// conn.Open();
-
-// var cmd = conn.CreateCommand();
-// cmd.CommandText = @"CREATE TABLE IF NOT EXISTS InventoryEvents (
-//     Id INTEGER PRIMARY KEY AUTOINCREMENT,
-//     Type TEXT NOT NULL,
-//     Timestamp TEXT NOT NULL
-// );";
-// cmd.ExecuteNonQuery();
-
-// Console.WriteLine("✔️ POS_Local.db initialized.");
