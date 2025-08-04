@@ -1,4 +1,10 @@
-﻿Console.WriteLine("POS Console App started.");
+﻿using Common;
+using Microsoft.Data.Sqlite;
+
+Console.WriteLine("POS Console App started.");
+
+Database.EnsurePOSSchema();
+Console.WriteLine("✔️ POS_Local.db schema ensured.");
 
 while (true)
 {
@@ -27,6 +33,8 @@ while (true)
             //  Add the sale transaction to the POS Local database
             if (!string.IsNullOrEmpty(barcode))
             {
+                SqliteConnection connection = Database.GetPOSLocalDB();
+
                 Console.WriteLine($"Product Sale Successful.");
             }
             else
@@ -49,6 +57,14 @@ while (true)
             {
                 Console.WriteLine("Invalid barcode. Please try again.");
             }
+        }
+        else if (transactionType == Common.Transaction.Types.RebuildSchemas)
+        {
+            Database.RebuildPOSSchema();
+            Console.WriteLine("✔️ POS schema rebuilt successfully.");
+
+            Database.RebuildStoreSchema();
+            Console.WriteLine("✔️ Store schema rebuilt successfully.");
         }
         else
         {

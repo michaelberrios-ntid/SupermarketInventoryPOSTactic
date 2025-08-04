@@ -1,6 +1,11 @@
+using Common;
+using Microsoft.Data.Sqlite;
+
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
-app.MapGet("/", () => "🏬 Store Inventory API is live");
+Database.EnsureStoreSchema();      // Creates tables if needed
+Database.SeedStoreInventory();     // ✅ Populates with initial data
 
+app.MapGet("/", () => "🏬 Store Inventory API is live");
 app.Run();

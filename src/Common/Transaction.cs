@@ -5,6 +5,7 @@ public class Transaction
     public enum Types
     {
         Sale,
-        Refund
+        Refund,
+        RebuildSchemas
     }
 }
