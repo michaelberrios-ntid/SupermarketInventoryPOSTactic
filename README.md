@@ -214,41 +214,6 @@ SupermarketInventoryPOSTactic/
 └── README.md
 ```
 
-## 📊 Performance Metrics
-
-Based on successful deployment testing:
-
-- **Sync Completion Time**: ~100ms per cycle
-- **Health Check Response**: 2-3ms average
-- **Database Operations**: <50ms for batch operations
-- **Error Recovery**: Automatic retry with exponential backoff
-- **Data Consistency**: 100% transaction sync success rate
-
-## 🔧 Key Implementation Details
-
-### **Data Seeding Service**
-- Automatic generation of sample transactions and inventory updates
-- Configurable data volumes for testing scenarios
-- Realistic data patterns with randomized values
-
-### **Resilience Patterns**
-```csharp
-// Retry Policy with Exponential Backoff
-Policy
-    .HandleResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)
-    .WaitAndRetryAsync(
-        retryCount: 3,
-        sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))
-    );
-
-// Circuit Breaker Pattern
-Policy
-    .HandleResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)
-    .CircuitBreakerAsync(
-        handledEventsAllowedBeforeBreaking: 3,
-        durationOfBreak: TimeSpan.FromSeconds(30)
-    );
-```
 
 ### **Health Monitoring**
 - Continuous health checks every 5 minutes (configurable)
