@@ -56,7 +56,7 @@ public static class Database
         using var command = connection.CreateCommand();
         command.CommandText = @"
         CREATE TABLE IF NOT EXISTS Product (
-            product_id TEXT PRIMARY KEY,
+            product_id INTEGER PRIMARY KEY,
             name TEXT NOT NULL,
             price REAL NOT NULL,
             quantity INTEGER NOT NULL
@@ -65,7 +65,7 @@ public static class Database
         CREATE TABLE IF NOT EXISTS SalesTransaction (
             id TEXT PRIMARY KEY,
             transaction_type TEXT NOT NULL CHECK(transaction_type IN ('Sale', 'Refund')),
-            product_id TEXT NOT NULL,
+            product_id INTEGER NOT NULL,
             quantity INTEGER NOT NULL,
             price REAL NOT NULL,
             timestamp TEXT NOT NULL
@@ -84,7 +84,7 @@ public static class Database
         DROP TABLE IF EXISTS Product;
 
         CREATE TABLE Product (
-            product_id TEXT PRIMARY KEY,
+            product_id INTEGER PRIMARY KEY,
             name TEXT NOT NULL,
             price REAL NOT NULL,
             quantity INTEGER NOT NULL
@@ -93,7 +93,7 @@ public static class Database
         CREATE TABLE SalesTransaction (
             id TEXT PRIMARY KEY,
             transaction_type TEXT NOT NULL CHECK(transaction_type IN ('Sale', 'Refund')),
-            product_id TEXT NOT NULL,
+            product_id INTEGER NOT NULL,
             quantity INTEGER NOT NULL,
             price REAL NOT NULL,
             timestamp TEXT NOT NULL
@@ -109,11 +109,11 @@ public static class Database
         using var command = connection.CreateCommand();
         command.CommandText = @"
         INSERT OR IGNORE INTO Product (product_id, name, price, quantity) VALUES
-            ('P1001', 'Organic Apples', 0.99, 100),
-            ('P1002', 'Whole Milk Gallon', 3.49, 50),
-            ('P1003', 'Brown Eggs (12ct)', 2.79, 60),
-            ('P1004', 'Wheat Bread Loaf', 1.99, 40),
-            ('P1005', 'Bottled Water (24pk)', 4.99, 30);";
+            (1001, 'Organic Apples', 0.99, 100),
+            (1002, 'Whole Milk Gallon', 3.49, 50),
+            (1003, 'Brown Eggs (12ct)', 2.79, 60),
+            (1004, 'Wheat Bread Loaf', 1.99, 40),
+            (1005, 'Bottled Water (24pk)', 4.99, 30);";
         command.ExecuteNonQuery();
     }
 

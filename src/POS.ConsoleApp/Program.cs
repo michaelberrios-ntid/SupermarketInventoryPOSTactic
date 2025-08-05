@@ -1,5 +1,6 @@
 ﻿using Common;
-using Microsoft.Data.Sqlite;
+using Common.Models;
+using System.Net.Http.Json;
 
 Console.WriteLine("POS Console App started.");
 
@@ -28,19 +29,56 @@ while (true)
         {
             Console.WriteLine("Processing Sale transaction...");
             Console.Write("Scan Product Barcode for Sale: ");
-            string? barcode = Console.ReadLine()?.Trim();
+            string? productId = Console.ReadLine()?.Trim();
 
-            //  Add the sale transaction to the POS Local database
-            if (!string.IsNullOrEmpty(barcode))
+            if (string.IsNullOrEmpty(productId))
             {
-                SqliteConnection connection = Database.GetPOSLocalDB();
+                Console.WriteLine("❌ Invalid barcode.");
+                return;
+            }
 
-                Console.WriteLine($"Product Sale Successful.");
-            }
-            else
+            var client = new HttpClient();
+            client.BaseAddress = new Uri("http://store_api:8080"); // container name
+
+            var product = await client.GetFromJsonAsync<ProductDto>($"/product/{productId}");
+            if (product == null)
             {
-                Console.WriteLine("Invalid barcode. Please try again.");
+                Console.WriteLine("❌ Product not found.");
+                return;
             }
+
+            Console.WriteLine($"✔️ Found {product.Name} — Price: ${product.Price}, Stock: {product.Quantity}");
+            Console.Write("Enter quantity to purchase: ");
+            if (!int.TryParse(Console.ReadLine(), out int quantity) || quantity <= 0)
+            {
+                Console.WriteLine("❌ Invalid quantity.");
+                return;
+            }
+
+            if (quantity > product.Quantity)
+            {
+                Console.WriteLine("❌ Not enough stock available.");
+                return;
+            }
+
+            // Record transaction
+            using var posConn = Database.GetPOSLocalDB();
+            posConn.Open();
+
+            using var insertCmd = posConn.CreateCommand();
+            insertCmd.CommandText = @"
+                INSERT INTO SalesTransaction (id, transaction_type, product_id, quantity, price, timestamp)
+                VALUES ($id, 'Sale', $pid, $qty, $price, $ts);";
+
+            insertCmd.Parameters.AddWithValue("$id", Guid.NewGuid().ToString());
+            insertCmd.Parameters.AddWithValue("$pid", product.Id);
+            insertCmd.Parameters.AddWithValue("$qty", quantity);
+            insertCmd.Parameters.AddWithValue("$price", product.Price);
+            insertCmd.Parameters.AddWithValue("$ts", DateTime.UtcNow.ToString("o"));
+
+            insertCmd.ExecuteNonQuery();
+
+            Console.WriteLine("✅ Product Sale Successful.");
         }
         else if (transactionType == Common.Transaction.Types.Refund)
         {
