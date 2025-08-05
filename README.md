@@ -69,5 +69,30 @@ docker run -it --rm \
   -v supermarketinventorypostactic_storedata:/data \
   nouchka/sqlite3 /data/LocalStore.db
 
+SQLite version 3.40.1 2022-12-28 14:03:47
+Enter ".help" for usage hints.
+sqlite> select * from SalesTransaction;
+## there are no records yet
+```
 
+Once the sync service synchronizes every 60 seconds (1 minute), you will see the records in the Store Inventory API's database:
+```
+sqlite> select * from SalesTransaction;
+sqlite> select * from SalesTransaction;
+id                                    transaction_type  product_id  quantity  price  timestamp                   
+------------------------------------  ----------------  ----------  --------  -----  ----------------------------
+c5143608-c7a0-446a-ba47-0ab285c6c170  Sale              1001        20        0.99   2025-08-05T11:07:36.6377297Z
+```
+At this point, the POS Local Database has the records removed as they've been processed by the sync service.
+```
+sqlite> select * from SalesTransaction;
+## there are no records anymore until a new transaction occurs
+```
+
+Additionally, the Store Inventory API's database will also update the Product table to reflect the new stock levels:
+```
+sqlite> select * from Product WHERE product_id = "1001";
+product_id  name            price  quantity
+----------  --------------  -----  --------
+1001        Organic Apples  0.99   80 
 ```

@@ -1,59 +1,70 @@
-using Microsoft.Data.Sqlite;
+using System.Net.Http.Json;
 using Common;
+using Common.Models;
+using Microsoft.Data.Sqlite;
 
 Console.WriteLine("🔄 POS Sync Service running...");
 
-// Open both DBs
 Database.EnsurePOSSchema();
-using var posConn = Database.GetPOSLocalDB();
-posConn.Open();
 
-Database.EnsureStoreSchema();
-using var storeConn = Database.GetStoreLocalDB();
-storeConn.Open();
-
-// Read transactions from POS DB
-using var readCmd = posConn.CreateCommand();
-readCmd.CommandText = @"
-    SELECT id, transaction_type, product_id, quantity, price, timestamp 
-    FROM SalesTransaction;";
-
-using var reader = readCmd.ExecuteReader();
-
-var hasRows = false;
-var insertCmd = storeConn.CreateCommand();
-var insertTxn = storeConn.BeginTransaction();
-
-while (reader.Read())
+while (true)
 {
-    hasRows = true;
+    try
+    {
+        using var posConn = Database.GetPOSLocalDB();
+        posConn.Open();
 
-    insertCmd.CommandText = @"
-        INSERT INTO SalesTransaction (id, transaction_type, product_id, quantity, price, timestamp)
-        VALUES ($id, $type, $pid, $qty, $price, $ts);";
+        // Read unsynced transactions
+        using var readCmd = posConn.CreateCommand();
+        readCmd.CommandText = @"
+            SELECT id, transaction_type, product_id, quantity, price, timestamp 
+            FROM SalesTransaction;";
 
-    insertCmd.Parameters.Clear();
-    insertCmd.Parameters.AddWithValue("$id", reader.GetString(0));
-    insertCmd.Parameters.AddWithValue("$type", reader.GetString(1));
-    insertCmd.Parameters.AddWithValue("$pid", reader.GetString(2));
-    insertCmd.Parameters.AddWithValue("$qty", reader.GetInt32(3));
-    insertCmd.Parameters.AddWithValue("$price", reader.GetDouble(4));
-    insertCmd.Parameters.AddWithValue("$ts", reader.GetString(5));
+        using var reader = readCmd.ExecuteReader();
 
-    insertCmd.ExecuteNonQuery();
-}
+        var transactions = new List<SalesTransactionDto>();
 
-if (hasRows)
-{
-    insertTxn.Commit();
+        while (reader.Read())
+        {
+            transactions.Add(new SalesTransactionDto
+            {
+                Id = reader.GetString(0),
+                TransactionType = reader.GetString(1),
+                ProductId = reader.GetString(2),
+                Quantity = reader.GetInt32(3),
+                Price = reader.GetDouble(4),
+                Timestamp = reader.GetString(5)
+            });
+        }
 
-    using var deleteCmd = posConn.CreateCommand();
-    deleteCmd.CommandText = "DELETE FROM SalesTransaction;";
-    deleteCmd.ExecuteNonQuery();
+        if (transactions.Count == 0)
+        {
+            Console.WriteLine("⏳ No new transactions to sync.");
+        }
+        else
+        {
+            using var client = new HttpClient { BaseAddress = new Uri("http://store_api:8080") };
+            var response = await client.PostAsJsonAsync("/sync/sales", transactions);
 
-    Console.WriteLine("✅ Transactions synced and cleared from POS DB.");
-}
-else
-{
-    Console.WriteLine("🕊️ No transactions to sync.");
+            if (response.IsSuccessStatusCode)
+            {
+                using var deleteCmd = posConn.CreateCommand();
+                deleteCmd.CommandText = "DELETE FROM SalesTransaction;";
+                deleteCmd.ExecuteNonQuery();
+
+                Console.WriteLine($"✅ Synced {transactions.Count} transaction(s).");
+            }
+            else
+            {
+                Console.WriteLine($"❌ Failed to sync: {response.StatusCode}");
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"🚨 Sync error: {ex.Message}");
+    }
+
+    Console.WriteLine("🕒 Waiting 60 seconds...\n");
+    await Task.Delay(TimeSpan.FromMinutes(1));
 }
