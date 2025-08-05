@@ -3,7 +3,7 @@ using Common;
 using Common.Models;
 using Microsoft.Data.Sqlite;
 
-Console.WriteLine("🔄 POS Sync Service running...");
+Console.WriteLine("POS Sync Service running...");
 
 Database.EnsurePOSSchema();
 
@@ -39,30 +39,49 @@ while (true)
 
         if (transactions.Count == 0)
         {
-            Console.WriteLine("⏳ No new transactions to sync.");
+            Console.WriteLine("No new transactions to sync.");
         }
         else
         {
             using var client = new HttpClient { BaseAddress = new Uri("http://store_api:8080") };
-            var response = await client.PostAsJsonAsync("/sync/sales", transactions);
 
-            if (response.IsSuccessStatusCode)
+            var sales = transactions.Where(t => t.TransactionType == "Sale").ToList();
+            var refunds = transactions.Where(t => t.TransactionType == "Refund").ToList();
+
+            bool success = true;
+
+            if (sales.Any())
+            {
+                var res = await client.PostAsJsonAsync("/sync/sales", sales);
+                success &= res.IsSuccessStatusCode;
+                Console.WriteLine(res.IsSuccessStatusCode
+                    ? $"Synced {sales.Count} sale(s)."
+                    : $"Failed to sync sales: {res.StatusCode}");
+            }
+
+            if (refunds.Any())
+            {
+                var res = await client.PostAsJsonAsync("/sync/return", refunds);
+                success &= res.IsSuccessStatusCode;
+                Console.WriteLine(res.IsSuccessStatusCode
+                    ? $"Synced {refunds.Count} refund(s)."
+                    : $"Failed to sync refunds: {res.StatusCode}");
+            }
+
+            if (success)
             {
                 using var deleteCmd = posConn.CreateCommand();
                 deleteCmd.CommandText = "DELETE FROM SalesTransaction;";
                 deleteCmd.ExecuteNonQuery();
 
-                Console.WriteLine($"✅ Synced {transactions.Count} transaction(s).");
-            }
-            else
-            {
-                Console.WriteLine($"❌ Failed to sync: {response.StatusCode}");
+                Console.WriteLine($"Cleared local synced transactions.");
             }
         }
+
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"🚨 Sync error: {ex.Message}");
+        Console.WriteLine($"Sync error: {ex.Message}");
     }
 
     Console.WriteLine("🕒 Waiting 60 seconds...\n");

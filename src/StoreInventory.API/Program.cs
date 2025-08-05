@@ -79,4 +79,41 @@ app.MapPost("/sync/sales", (List<SalesTransactionDto> transactions) =>
     return Results.Ok("✔️ Sales synced successfully.");
 });
 
+app.MapPost("/sync/return", (List<SalesTransactionDto> refunds) =>
+{
+    using var conn = Database.GetStoreLocalDB();
+    conn.Open();
+
+    using var tx = conn.BeginTransaction();
+
+    foreach (var item in refunds)
+    {
+        // 1. Insert into SalesTransaction
+        using var insert = conn.CreateCommand();
+        insert.CommandText = @"
+            INSERT INTO SalesTransaction (id, transaction_type, product_id, quantity, price, timestamp)
+            VALUES ($id, 'Refund', $pid, $qty, $price, $ts);";
+
+        insert.Parameters.AddWithValue("$id", item.Id);
+        insert.Parameters.AddWithValue("$pid", item.ProductId);
+        insert.Parameters.AddWithValue("$qty", item.Quantity);
+        insert.Parameters.AddWithValue("$price", item.Price);
+        insert.Parameters.AddWithValue("$ts", item.Timestamp);
+        insert.ExecuteNonQuery();
+
+        // 2. Update product inventory
+        using var update = conn.CreateCommand();
+        update.CommandText = @"
+            UPDATE Product
+            SET quantity = quantity + $qty
+            WHERE product_id = $pid;";
+        update.Parameters.AddWithValue("$qty", item.Quantity);
+        update.Parameters.AddWithValue("$pid", item.ProductId);
+        update.ExecuteNonQuery();
+    }
+
+    tx.Commit();
+    return Results.Ok("✔️ Refunds synced successfully.");
+});
+
 app.Run();

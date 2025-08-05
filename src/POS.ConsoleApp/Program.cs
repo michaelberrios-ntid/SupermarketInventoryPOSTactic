@@ -5,7 +5,7 @@ using System.Net.Http.Json;
 Console.WriteLine("POS Console App started.");
 
 Database.EnsurePOSSchema();
-Console.WriteLine("✔️ POS_Local.db schema ensured.");
+Console.WriteLine("POS_Local.db schema ensured.");
 
 while (true)
 {
@@ -15,6 +15,7 @@ while (true)
         Console.WriteLine($"  {type}");
     }
 
+    Console.Write("Your choice: ");
     string? input = Console.ReadLine()?.Trim();
     if (string.IsNullOrEmpty(input) || int.TryParse(input, out _))
     {
@@ -33,7 +34,7 @@ while (true)
 
             if (string.IsNullOrEmpty(productId))
             {
-                Console.WriteLine("❌ Invalid barcode.");
+                Console.WriteLine("Invalid barcode.");
                 return;
             }
 
@@ -43,21 +44,21 @@ while (true)
             var product = await client.GetFromJsonAsync<ProductDto>($"/product/{productId}");
             if (product == null)
             {
-                Console.WriteLine("❌ Product not found.");
+                Console.WriteLine("Product not found.");
                 return;
             }
 
-            Console.WriteLine($"✔️ Found {product.Name} — Price: ${product.Price}, Stock: {product.Quantity}");
+            Console.WriteLine($"Found {product.Name} — Price: ${product.Price}, Stock: {product.Quantity}");
             Console.Write("Enter quantity to purchase: ");
             if (!int.TryParse(Console.ReadLine(), out int quantity) || quantity <= 0)
             {
-                Console.WriteLine("❌ Invalid quantity.");
+                Console.WriteLine("Invalid quantity.");
                 return;
             }
 
             if (quantity > product.Quantity)
             {
-                Console.WriteLine("❌ Not enough stock available.");
+                Console.WriteLine("Not enough stock available.");
                 return;
             }
 
@@ -78,31 +79,55 @@ while (true)
 
             insertCmd.ExecuteNonQuery();
 
-            Console.WriteLine("✅ Product Sale Successful.");
+            Console.WriteLine("Product Sale Successful.");
         }
-        else if (transactionType == Common.Transaction.Types.Refund)
+        else if (transactionType == Common.Transaction.Types.Return)
         {
             Console.WriteLine("Processing Refund transaction...");
-            Console.Write("Scan Product Barcode for Refund: ");
-            string? barcode = Console.ReadLine()?.Trim();
+            Console.Write("🔍 Scan Product Barcode for Refund: ");
+            string? productId = Console.ReadLine()?.Trim();
 
-            // Add the refund transaction to the POS Local database
-            if (!string.IsNullOrEmpty(barcode))
-            {
-                Console.WriteLine($"Product Refund Successful (TODO: Show amount refunded).");
-            }
-            else
+            if (string.IsNullOrEmpty(productId))
             {
                 Console.WriteLine("Invalid barcode. Please try again.");
+                return;
             }
-        }
-        else if (transactionType == Common.Transaction.Types.RebuildSchemas)
-        {
-            Database.RebuildPOSSchema();
-            Console.WriteLine("✔️ POS schema rebuilt successfully.");
 
-            Database.RebuildStoreSchema();
-            Console.WriteLine("✔️ Store schema rebuilt successfully.");
+            using var http = new HttpClient { BaseAddress = new Uri("http://store_api:8080") };
+            var product = await http.GetFromJsonAsync<ProductDto>($"/product/{productId}");
+
+            if (product == null)
+            {
+                Console.WriteLine("Product not found in inventory.");
+                return;
+            }
+
+            Console.WriteLine($"{product.Name} — ${product.Price:F2} — Stock: {product.Quantity}");
+            Console.Write("Enter quantity to refund: ");
+            if (!int.TryParse(Console.ReadLine()?.Trim(), out int quantity) || quantity < 1)
+            {
+                Console.WriteLine("Invalid quantity.");
+                return;
+            }
+
+            // Record the refund in POS_Local.db
+            using var posConn = Database.GetPOSLocalDB();
+            posConn.Open();
+
+            using var insertCmd = posConn.CreateCommand();
+            insertCmd.CommandText = @"
+                INSERT INTO SalesTransaction (id, transaction_type, product_id, quantity, price, timestamp)
+                VALUES ($id, 'Refund', $pid, $qty, $price, $ts);";
+
+            insertCmd.Parameters.AddWithValue("$id", Guid.NewGuid().ToString());
+            insertCmd.Parameters.AddWithValue("$pid", productId);
+            insertCmd.Parameters.AddWithValue("$qty", quantity);
+            insertCmd.Parameters.AddWithValue("$price", product.Price);
+            insertCmd.Parameters.AddWithValue("$ts", DateTime.UtcNow.ToString("o"));
+
+            insertCmd.ExecuteNonQuery();
+
+            Console.WriteLine($"Product Refund Successful. Amount refunded: ${quantity * product.Price:F2}");
         }
         else
         {
