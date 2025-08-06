@@ -5,6 +5,7 @@ Implementation of the POS System Tactic for the Supermarket Inventory class proj
 When a Sale or Inventory change occurs, and event is created in the POS's local database. The POS Sync Service will then read these events and send them to the Store Inventory API, which will update the store's inventory accordingly. 
 
 ## Project Structure
+```
 SupermarketInventory/
 ├── docker-compose.yml
 ├── POS.ConsoleApp/
@@ -14,7 +15,8 @@ SupermarketInventory/
 ├── StoreInventory.API/
 │   └── Dockerfile
 └── Common/
-    └── InventoryEvent.cs
+  └── InventoryEvent.cs
+```
 
 ## Run the Docker Compose
 ```
