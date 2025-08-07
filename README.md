@@ -1,10 +1,27 @@
 # SupermarketInventoryPOSTactic
 Implementation of the POS System Tactic for the Supermarket Inventory class project used in the designed Architecture. 
 
+## Quality Attribute: Reliability
+Tactic: Fault Tolerance via Deferred Synchronization
+
+The POS Sync Service is designed to ensure that no sales or return transactions are lost if the StoreInventory API becomes temporarily unavailable.
+
+When the API is unreachable or returns an error, transactions remain in POS_Local.db.
+
+The sync process retries periodically until a successful connection is established.
+
+Only after a confirmed API response does the POS Sync Service remove the transactions from POS_Local.db and transfer them to LocalStore.db.
+
+### Benefit:
+This approach guarantees data persistence and transaction integrity despite network or API failures, ensuring the system can continue operating locally without losing records.
+
 ## Process
 When a Sale or Inventory change occurs, and event is created in the POS's local database. The POS Sync Service will then read these events and send them to the Store Inventory API, which will update the store's inventory accordingly. 
 
+To demonstrate reliability, intentionally stop (crash) the StoreInventory.API service. During this downtime, any new transactions will continue to be saved in the POS Local Database. When the StoreInventory.API becomes available again, the POS Sync Service will automatically detect this and synchronize all pending transactions. The sync service will keep retrying until all transactions are successfully sent to the StoreInventory.API, ensuring no data is lost even during temporary outages.
+
 ## Project Structure
+
 ```
 SupermarketInventory/
 ├── docker-compose.yml
@@ -15,7 +32,8 @@ SupermarketInventory/
 ├── StoreInventory.API/
 │   └── Dockerfile
 └── Common/
-  └── InventoryEvent.cs
+  └── Database.cs
+  └── Transaction.cs
 ```
 
 ## Run the Docker Compose
@@ -23,6 +41,11 @@ SupermarketInventory/
 docker compose down -v
 docker compose build --no-cache
 docker compose up
+```
+
+### If a Volume is Still in Use (force stop)
+```
+docker rm -f $(docker ps -aq)
 ```
 
 ## On a Separate Terminal, run the POS Console App
@@ -98,3 +121,30 @@ product_id  name            price  quantity
 ----------  --------------  -----  --------
 1001        Organic Apples  0.99   80 
 ```
+
+## Crashing the StoreInventory.API
+To demonstrate the reliability of the POS Sync Service, you can stop the StoreInventory.API service. This will simulate a failure scenario where the API is temporarily unavailable.
+
+On another terminal, you can stop the StoreInventory.API service by running:
+```
+docker compose stop storeinventory_api
+``` 
+
+## Attempt to do a Transacation (Sale or Refund)
+While the StoreInventory.API is down, you can still perform transactions in the POS Console App.
+These transactions will be saved in the POS Local Database and will not be lost.
+
+Go back to the POS Console App terminal and perform another a transaction:
+```
+Select an Transaction Type:
+  Sale
+  Refund
+sale
+You selected: Refund
+Processing Sale transaction...
+Scan Product Barcode for Sale: 1001
+✔️ Found Organic Apples — Price: $0.99, Stock: 100
+Enter quantity to purchase: 20
+✅ Product Refund Successful.
+```
+
