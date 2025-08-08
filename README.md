@@ -40,7 +40,7 @@ SupermarketInventory/
 ```
 docker compose down -v
 docker compose build --no-cache
-docker compose up
+docker compose up -d --scale store_api=3
 ```
 
 ### If a Volume is Still in Use (force stop)
@@ -131,7 +131,12 @@ docker compose stop storeinventory_api
 ``` 
 
 ## Attempt to do a Transacation (Sale or Refund)
-While the StoreInventory.API is down, you can still perform transactions in the POS Console App.
+Simulate a system failure by killing store_api-1 container:
+```
+docker kill supermarketinventorypostactic-store_api-1
+```
+
+While the StoreInventory.API (store_api-1) is down, you can still perform transactions in the POS Console App.
 These transactions will be saved in the POS Local Database and will not be lost.
 
 Go back to the POS Console App terminal and perform another a transaction:
@@ -147,4 +152,4 @@ Scan Product Barcode for Sale: 1001
 Enter quantity to purchase: 20
 ✅ Product Refund Successful.
 ```
-
+...

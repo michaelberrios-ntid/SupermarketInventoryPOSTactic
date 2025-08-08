@@ -43,7 +43,8 @@ while (true)
         }
         else
         {
-            using var client = new HttpClient { BaseAddress = new Uri("http://store_api:8080") };
+            var baseUrl = Environment.GetEnvironmentVariable("STORE_API_BASE") ?? "http://nginx";
+            using var client = new HttpClient { BaseAddress = new Uri(baseUrl) };
 
             var sales = transactions.Where(t => t.TransactionType == "Sale").ToList();
             var refunds = transactions.Where(t => t.TransactionType == "Refund").ToList();
