@@ -152,4 +152,29 @@ Scan Product Barcode for Sale: 1001
 Enter quantity to purchase: 20
 ✅ Product Refund Successful.
 ```
+
+### Killing all containers would results in a failure to sync
+```
+docker kill supermarketinventorypostactic-store_api-2
+docker kill supermarketinventorypostactic-store_api-3
+```
+
+## Atttemp to do more transactions
+```
+Select an Transaction Type:
+  Sale
+  Return
+Your choice: sale
+You selected: Sale
+Processing Sale transaction...
+Scan Product Barcode for Sale: 1001
+Unhandled exception. System.Net.Http.HttpRequestException: Resource temporarily unavailable (store_api:8080)
+ ---> System.Net.Sockets.SocketException (11): Resource temporarily unavailable
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at System.Net.Sockets.Socket.<ConnectAsync>g__WaitForConnectWithCancellation|285_0(AwaitableSocketAsyncEventArgs saea, ValueTask connectTask, CancellationToken cancellationToken)
+   at System.Net.Http.HttpConnectionPool.ConnectToTcpHostAsync(String host, Int32 port, HttpRequestMessage initialRequest, Boolean async, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
 ...
+...
+```
